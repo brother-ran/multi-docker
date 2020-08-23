@@ -1,0 +1,20 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t justawalker/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true justawalker/react-test npm test -- --coverage
+
+after_success:
+    - docker build -t justawalker/multi-client ./client
+    - docker build -t justawalker/multi-nginx ./nginx
+    - docker build -t justawalker/multi-server ./server
+    - docker build -t justawalker/multi-worker ./worker
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    - docker push justawalker/multi-client
+    - docker push justawalker/multi-nginx
+    - docker push justawalker/multi-server
+    - docker push justawalker/multi-worker
